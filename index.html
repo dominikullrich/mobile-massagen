@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mobile massagen – by ulli</title>
+<style>
+* {box-sizing:border-box}
+body {
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f8f0e8;
+  color:#666;
+}
+header {
+  background:#e5c5ab;
+  padding:24px;
+  text-align:center;
+}
+h1 {margin:0;font-size:29px}
+header p {margin:6px;font-style:italic}
+main {max-width:850px;margin:auto;padding:22px}
+.grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:15px;
+}
+button {
+  cursor:pointer;
+  font:inherit;
+}
+.tile {
+  min-height:140px;
+  background:#fffaf5;
+  border:1px solid #e3d1c2;
+  border-radius:16px;
+  padding:20px;
+  font-size:19px;
+  color:#666;
+}
+.tile span {display:block;font-size:35px;margin-bottom:12px}
+section {
+  background:#fffaf5;
+  border-radius:15px;
+  padding:20px;
+  margin-top:20px;
+}
+input,select {
+  display:block;
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border:1px solid #d8c6b7;
+  border-radius:8px;
+  font:inherit;
+}
+.action {
+  background:#dcb89c;
+  border:0;
+  padding:12px 18px;
+  border-radius:9px;
+}
+.entry {
+  border-bottom:1px solid #e6d9cd;
+  padding:12px 0;
+}
+.back {margin-bottom:15px}
+@media(max-width:500px){
+  .grid {grid-template-columns:1fr}
+  .tile {min-height:95px}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>mobile massagen</h1>
+<p>by ulli</p>
+</header>
+<main id="app"></main>
+<script>
+const KEY="mobile-massagen-data";
+let data=JSON.parse(localStorage.getItem(KEY)||'null')||
+{kunden:[],gutscheine:[],einnahmen:[],ausgaben:[]};
+
+function save(){
+ localStorage.setItem(KEY,JSON.stringify(data));
+}
+function safe(s){
+ return String(s??"").replace(/[&<>"']/g,c=>
+ ({"&":"&amp;","<":"&lt;",">":"&gt;",
+ '"':"&quot;","'":"&#39;"}[c]));
+}
+function euro(n){
+ return Number(n||0).toLocaleString("de-DE",
+ {style:"currency",currency:"EUR"});
+}
+function home(){
+ document.getElementById("app").innerHTML=`
+ <div class="grid">
+ <button class="tile" onclick="page('kunden')">
+ <span>👤</span>Kundenkartei</button>
+ <button class="tile" onclick="page('gutscheine')">
+ <span>🎁</span>Gutscheine</button>
+ <button class="tile" onclick="page('einnahmen')">
+ <span>💶</span>Einnahmen</button>
+ <button class="tile" onclick="page('ausgaben')">
+ <span>🧾</span>Ausgaben</button>
+ </div>`;
+}
+const titles={
+ kunden:"Kundenkartei",
+ gutscheine:"Gutscheine",
+ einnahmen:"Einnahmen",
+ ausgaben:"Ausgaben"
+};
+const fields={
+ kunden:[
+ ["name","Name","text"],
+ ["telefon","Telefon","tel"],
+ ["email","E-Mail","email"],
+ ["adresse","Adresse","text"]],
+ gutscheine:[
+ ["nummer","Gutscheinnummer","text"],
+ ["wert","Gutscheinwert (€)","number"],
+ ["status","Status","select"]],
+ einnahmen:[
+ ["datum","Datum","date"],
+ ["beschreibung","Beschreibung","text"],
+ ["betrag","Betrag (€)","number"]],
+ ausgaben:[
+ ["datum","Datum","date"],
+ ["beschreibung","Beschreibung","text"],
+ ["betrag","Betrag (€)","number"]]
+};
+function page(type){
+ let form=fields[type].map(([id,label,kind])=>
+ kind==="select"
+ ?`<select id="${id}">
+ <option>Offen</option><option>Eingelöst</option>
+ </select>`
+ :`<input id="${id}" type="${kind}"
+ ${kind==="number"?'min="0" step="0.01"':''}
+ placeholder="${label}">`).join("");
+ let entries=data[type].map((x,i)=>
+ `<div class="entry">
+ ${fields[type].map(([id,label])=>
+ `<div><b>${label}:</b> ${safe(x[id])}</div>`).join("")}
+ <button onclick="removeEntry('${type}',${i})">
+ Löschen</button></div>`).join("");
+ let total=["einnahmen","ausgaben"].includes(type)
+ ?`<h3>Gesamt: ${euro(data[type].reduce(
+ (sum,x)=>sum+Number(x.betrag||0),0))}</h3>`:"";
+ document.getElementById("app").innerHTML=`
+ <button class="action back" onclick="home()">
+ ← Zurück</button>
+ <section><h2>${titles[type]}</h2>
+ ${form}
+ <button class="action" onclick="add('${type}')">
+ Speichern</button></section>
+ <section><h3>Einträge</h3>${total}
+ ${entries||"Noch keine Einträge vorhanden."}
+ </section>`;
+}
+function add(type){
+ let item={};
+ for(let [id,label] of fields[type]){
+  let value=document.getElementById(id).value.trim();
+  if(!value){alert(label+" fehlt.");return}
+  item[id]=value;
+ }
+ data[type].push(item);
+ save();
+ page(type);
+}
+function removeEntry(type,index){
+ if(confirm("Eintrag wirklich löschen?")){
+  data[type].splice(index,1);
+  save();
+  page(type);
+ }
+}
+home();
+</script>
+</body>
+</html>
