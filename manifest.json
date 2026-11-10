@@ -1,0 +1,11 @@
+{
+  "name": "mobile massagen – by ulli",
+  "short_name": "mobile massagen",
+  "description": "Verwaltung für mobile massagen by ulli",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f0e8",
+  "theme_color": "#e5c5ab",
+  "lang": "de"
+}
